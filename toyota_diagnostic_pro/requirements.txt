@@ -1,0 +1,10 @@
+streamlit
+obd
+python-can
+cantools
+rich
+pandas
+plotly
+reportlab
+openpyxl
+xlsxwriter

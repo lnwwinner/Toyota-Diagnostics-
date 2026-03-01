@@ -1,0 +1,5 @@
+{
+  "name": "Toyota Diagnostic Pro (TDP)",
+  "description": "Professional ECU Map Editing Engine and Binary Analysis tool for Toyota vehicles with real-time diagnostics, simulation, and rule-based analysis.",
+  "requestFramePermissions": []
+}

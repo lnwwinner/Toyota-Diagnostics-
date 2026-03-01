@@ -1,0 +1,49 @@
+VERSION ""
+
+
+NS_ : 
+	NS_DESC_
+	CM_
+	BA_DEF_
+	BA_
+	VAL_
+	CAT_DEF_
+	CAT_
+	FILTER
+	BA_DEF_DEF_
+	EV_DATA_
+	ENVVAR_DATA_
+	SGTYPE_
+	SGTYPE_VAL_
+	BA_DEF_SGTYPE_
+	BA_SGTYPE_
+	SIG_TYPE_REF_
+	VAL_TABLE_
+	SIG_GROUP_
+	SIG_VALTYPE_
+	SIG_UNIT_
+	NODE_NET_REL_
+	NODE_NET_REL_
+	SIG_KIND_
+	BO_TX_BU_
+	SG_MUL_VAL_
+
+BS_:
+
+BU_:
+
+
+BO_ 256 SteeringStatus: 8 Vector__XXX
+ SG_ SteeringAngle : 0|16@1+ (0.1,-3276.8) [-3276.8|3276.7] "deg" Vector__XXX
+
+BO_ 512 WheelSpeeds: 8 Vector__XXX
+ SG_ WheelSpeed_FL : 0|16@1+ (0.01,0) [0|655.35] "km/h" Vector__XXX
+ SG_ WheelSpeed_FR : 16|16@1+ (0.01,0) [0|655.35] "km/h" Vector__XXX
+ SG_ WheelSpeed_RL : 32|16@1+ (0.01,0) [0|655.35] "km/h" Vector__XXX
+ SG_ WheelSpeed_RR : 48|16@1+ (0.01,0) [0|655.35] "km/h" Vector__XXX
+
+BO_ 768 BrakeStatus: 8 Vector__XXX
+ SG_ BrakePressure : 0|8@1+ (1,0) [0|255] "bar" Vector__XXX
+
+BO_ 1024 GearStatus: 8 Vector__XXX
+ SG_ GearPosition : 0|4@1+ (1,0) [0|15] "" Vector__XXX
