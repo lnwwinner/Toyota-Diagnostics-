@@ -57,6 +57,34 @@ class OBDSimulator:
             index=self.rpm_points, 
             columns=self.load_points
         )
+
+        # VVT Intake Map (Degrees Advance)
+        base_vvt_in = np.array([
+            [0, 5, 10, 15, 20],
+            [5, 15, 25, 35, 45],
+            [10, 20, 30, 40, 50],
+            [15, 25, 35, 45, 50],
+            [20, 30, 40, 50, 50]
+        ])
+        self.vvt_intake_map = pd.DataFrame(
+            base_vvt_in,
+            index=self.rpm_points,
+            columns=self.load_points
+        )
+
+        # VVT Exhaust Map (Degrees Retard)
+        base_vvt_ex = np.array([
+            [0, 2, 5, 8, 10],
+            [2, 5, 10, 15, 20],
+            [5, 10, 15, 20, 25],
+            [8, 15, 20, 25, 30],
+            [10, 20, 25, 30, 35]
+        ])
+        self.vvt_exhaust_map = pd.DataFrame(
+            base_vvt_ex,
+            index=self.rpm_points,
+            columns=self.load_points
+        )
         self.simulation_speed = 1.0
         self.pause_event.clear()
 
@@ -88,6 +116,12 @@ class OBDSimulator:
     def update_ignition_map(self, new_map_df):
         self.ignition_map = new_map_df
 
+    def update_vvt_intake_map(self, new_map_df):
+        self.vvt_intake_map = new_map_df
+
+    def update_vvt_exhaust_map(self, new_map_df):
+        self.vvt_exhaust_map = new_map_df
+
     def _get_map_value(self, map_df, rpm, load):
         # Find nearest RPM index
         rpm_idx = min(range(len(self.rpm_points)), key=lambda i: abs(self.rpm_points[i]-rpm))
@@ -110,11 +144,15 @@ class OBDSimulator:
         # Get Map Values
         fuel_mult = self._get_map_value(self.fuel_map, self.data["RPM"], self.data["ENGINE_LOAD"])
         ign_timing = self._get_map_value(self.ignition_map, self.data["RPM"], self.data["ENGINE_LOAD"])
+        vvt_in = self._get_map_value(self.vvt_intake_map, self.data["RPM"], self.data["ENGINE_LOAD"])
+        vvt_ex = self._get_map_value(self.vvt_exhaust_map, self.data["RPM"], self.data["ENGINE_LOAD"])
         
         # Apply Map Values to Simulation
         base_pw = 2.0
         self.data["INJECTOR_PW"] = base_pw * (self.data["RPM"]/2000) * (self.data["ENGINE_LOAD"]/50) * fuel_mult
         self.data["IGNITION_TIMING"] = ign_timing + random.uniform(-0.5, 0.5)
+        self.data["VVT_INTAKE_ANGLE_DIFF"] = vvt_in + random.uniform(-0.2, 0.2)
+        self.data["VVT_EXHAUST_ANGLE_DIFF"] = vvt_ex + random.uniform(-0.2, 0.2)
 
         self.data["FUEL_TRIM_ST"] = (1.0 - fuel_mult) * 20.0 
         self.data["SPEED"] = self.data["RPM"] * 0.02 
