@@ -1,5 +1,6 @@
 import pandas as pd
 import os
+import re
 
 class RuleEngine:
     def __init__(self, rules_path="toyota_diagnostic_pro/database/toyota_rules.xlsx"):
@@ -44,6 +45,16 @@ class RuleEngine:
                 # VVT (Variable Valve Timing) - Specific to Toyota
                 {"RuleID": "R017", "Condition": "VVT_INTAKE_ANGLE_DIFF > 5", "DTC": "P0011", "Symptom_TH": "องศา VVT ฝั่งไอดีผิดปกติ (Over-advanced)", "Recommendation_TH": "เช็ค OCV Valve, กรอง VVT, แรงดันน้ำมันเครื่อง"},
                 {"RuleID": "R018", "Condition": "VVT_EXHAUST_ANGLE_DIFF > 5", "DTC": "P0014", "Symptom_TH": "องศา VVT ฝั่งไอเสียผิดปกติ (Over-advanced)", "Recommendation_TH": "เช็ค OCV Valve ฝั่งไอเสีย"},
+                # Complex Correlations
+                {"RuleID": "R033", "Condition": "FUEL_TRIM_ST > 10 and MAF < 4.0 and RPM > 2000", "DTC": "P0101", "Symptom_TH": "MAF วัดค่าต่ำกว่าจริง (Under-reporting)", "Recommendation_TH": "ทำความสะอาด MAF Sensor, เช็คคราบน้ำมันในท่อไอดี"},
+                {"RuleID": "R034", "Condition": "FUEL_TRIM_ST > 15 and THROTTLE_POS < 15 and RPM < 1000", "DTC": "P0171", "Symptom_TH": "รอยรั่วอากาศหลังลิ้นปีกผีเสื้อ (Vacuum Leak)", "Recommendation_TH": "เช็คท่อแวคคั่ม, ปะเก็นท่อไอดี, วาล์ว PCV"},
+                {"RuleID": "R035", "Condition": "FUEL_TRIM_LT > 10 and ENGINE_LOAD > 70", "DTC": "P0171", "Symptom_TH": "น้ำมันจ่ายไม่พอที่โหลดสูง (Fuel Starvation)", "Recommendation_TH": "เช็คกรองน้ำมันเชื้อเพลิง, ปั๊มน้ำมันเชื้อเพลิง, หัวฉีดตัน"},
+                # Historical Analysis
+                {"RuleID": "R036", "Condition": "stuck('VOLTAGE', 20)", "DTC": "P0562", "Symptom_TH": "แรงดันไฟฟ้าค้าง (Sensor Frozen)", "Recommendation_TH": "เช็คขั้วแบตเตอรี่, เช็คสายไฟ Alternator"},
+                {"RuleID": "R037", "Condition": "avg('COOLANT_TEMP', 10) > 100 and delta('COOLANT_TEMP', 5) > 1", "DTC": "P0217", "Symptom_TH": "แนวโน้มความร้อนขึ้นสูงอย่างรวดเร็ว", "Recommendation_TH": "จอดรถทันที, เช็คพัดลมหม้อน้ำ, เช็คระดับน้ำ"},
+                {"RuleID": "R038", "Condition": "RPM > 3000 and SPEED == 0 and ENGINE_LOAD > 80", "DTC": "-", "Symptom_TH": "ตรวจพบอาการเกียร์รูดหรือคลัตช์ลื่น (Stall Test)", "Recommendation_TH": "ตรวจสอบระบบส่งกำลัง, เช็คระดับน้ำมันเกียร์"},
+                {"RuleID": "R039", "Condition": "avg('FUEL_TRIM_ST', 10) > 5 and avg('O2_B1S1', 10) < 0.2", "DTC": "P0171", "Symptom_TH": "ส่วนผสมบางอย่างต่อเนื่อง (Consistent Lean)", "Recommendation_TH": "เช็คแรงดันน้ำมันเชื้อเพลิง, เช็คหัวฉีด"},
+                {"RuleID": "R040", "Condition": "delta('COOLANT_TEMP', 20) < 1 and RUN_TIME > 600 and COOLANT_TEMP < 80", "DTC": "P0128", "Symptom_TH": "เครื่องยนต์ร้อนช้าผิดปกติ (Thermostat Stuck Open)", "Recommendation_TH": "เปลี่ยนวาล์วน้ำ"},
                 # Injector
                 {"RuleID": "R031", "Condition": "INJECTOR_PW > 10 and RPM < 1000", "DTC": "P0200", "Symptom_TH": "หัวฉีดฉีดน้ำมันนานผิดปกติที่รอบต่ำ", "Recommendation_TH": "เช็คหัวฉีดรั่ว, เช็คแรงดันน้ำมันเชื้อเพลิง"},
                 {"RuleID": "R032", "Condition": "INJECTOR_PW < 1 and RPM > 2000", "DTC": "P0200", "Symptom_TH": "หัวฉีดฉีดน้ำมันน้อยผิดปกติ", "Recommendation_TH": "เช็คปลั๊กหัวฉีด, เช็คกล่อง ECU"},
@@ -79,36 +90,61 @@ class RuleEngine:
         else:
             self.rules_df = pd.DataFrame()
 
-    def evaluate(self, sensor_data):
+    def evaluate(self, sensor_data, history=None):
         """
         Evaluate sensor data against rules.
         :param sensor_data: Dict of sensor values e.g. {'RPM': 800, 'COOLANT_TEMP': 90}
+        :param history: Optional pandas DataFrame of historical sensor data
         :return: List of dicts with issues found
         """
         issues = []
         if self.rules_df is None or self.rules_df.empty:
             return issues
 
-        # Prepare local variables for eval
+        # Prepare context for eval
         context = sensor_data.copy()
         
+        # Add helper functions for historical analysis
+        def get_avg(param, window=10):
+            if history is None or history.empty or param not in history.columns:
+                return sensor_data.get(param, 0)
+            return history[param].tail(window).mean()
+
+        def get_delta(param, window=5):
+            if history is None or history.empty or param not in history.columns or len(history) < 2:
+                return 0
+            return history[param].iloc[-1] - history[param].tail(window).iloc[0]
+
+        def is_stuck(param, window=10, threshold=0.01):
+            if history is None or history.empty or param not in history.columns or len(history) < window:
+                return False
+            return history[param].tail(window).std() < threshold
+
+        # Add helpers to context
+        context['avg'] = get_avg
+        context['delta'] = get_delta
+        context['stuck'] = is_stuck
+        
         for index, row in self.rules_df.iterrows():
-            condition = row['Condition']
+            condition = str(row['Condition'])
+            
+            # Support uppercase logical operators (AND, OR, NOT)
+            # Use regex with word boundaries to avoid replacing parts of variable names
+            condition = re.sub(r'\bAND\b', 'and', condition)
+            condition = re.sub(r'\bOR\b', 'or', condition)
+            condition = re.sub(r'\bNOT\b', 'not', condition)
+            
             try:
                 # Use python eval to check condition
-                # We assume sensor_data contains keys used in condition
-                if eval(condition, {}, context):
+                if eval(condition, {"__builtins__": {}}, context):
                     issues.append({
                         "RuleID": row['RuleID'],
                         "DTC": row['DTC'],
                         "Symptom": row['Symptom_TH'],
                         "Recommendation": row['Recommendation_TH']
                     })
-            except NameError:
-                # Variable not found in sensor data, skip rule
-                continue
-            except Exception as e:
-                # Ignore other errors during evaluation
+            except Exception:
+                # Skip rule if evaluation fails (e.g. missing variable)
                 continue
                 
         return issues

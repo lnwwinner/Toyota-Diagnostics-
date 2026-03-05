@@ -6,7 +6,7 @@ vehicle_mgr = VehicleManager()
 
 def render_dashboard():
     st.sidebar.title(f"👤 {st.session_state.user['username']}")
-    menu = st.sidebar.radio("เมนูหลัก", ["หน้าแรก", "Live OBD", "Live CAN", "ECU Tuner", "จัดการข้อมูลรถ", "รายงาน", "ออกจากระบบ"])
+    menu = st.sidebar.radio("เมนูหลัก", ["หน้าแรก", "Live OBD", "Live CAN", "ECU Tuner", "AI Assistant", "จัดการข้อมูลรถ", "รายงาน", "ออกจากระบบ"])
     
     if menu == "หน้าแรก":
         st.title("ยินดีต้อนรับสู่ Toyota Diagnostic Pro")
@@ -26,6 +26,10 @@ def render_dashboard():
     elif menu == "ECU Tuner":
         from toyota_diagnostic_pro.gui.ecu_tuner import render_ecu_tuner
         render_ecu_tuner()
+
+    elif menu == "AI Assistant":
+        from toyota_diagnostic_pro.gui.ai_assistant import render_ai_assistant
+        render_ai_assistant()
         
     elif menu == "จัดการข้อมูลรถ":
         render_vehicle_management()

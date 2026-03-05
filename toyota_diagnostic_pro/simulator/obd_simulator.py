@@ -3,6 +3,7 @@ import time
 import pandas as pd
 import numpy as np
 from threading import Thread, Event
+from toyota_diagnostic_pro.database.ecu_defaults import get_default_maps
 
 class OBDSimulator:
     def __init__(self):
@@ -23,8 +24,19 @@ class OBDSimulator:
             "VVT_INTAKE_ANGLE_DIFF": 0.0,
             "VVT_EXHAUST_ANGLE_DIFF": 0.0,
             "INJECTOR_PW": 2.5, # ms
-            "IGNITION_TIMING": 10.0 # deg
+            "IGNITION_TIMING": 10.0, # deg
+            "O2_B1S1": 0.5, # V
+            "RUN_TIME": 0, # s
+            "INTAKE_TEMP": 35, # C
+            "FUEL_PRESSURE": 400, # kPa
+            "BAROMETRIC_PRESSURE": 101, # kPa
+            "CONTROL_MODULE_VOLTAGE": 14.0, # V
+            "AMBIENT_AIR_TEMP": 30, # C
+            "OIL_TEMP": 95, # C
+            "EQUIV_RATIO": 1.0, # Lambda
+            "CAT_TEMP_B1S1": 450 # C
         }
+        self.start_time = time.time()
         self.stop_event = Event()
         self.pause_event = Event()
         self.thread = None
@@ -37,54 +49,18 @@ class OBDSimulator:
         self.reset_to_defaults()
 
     def reset_to_defaults(self):
-        # Fuel Map (Multiplier: 1.0 = Stoichiometric)
-        self.fuel_map = pd.DataFrame(
-            np.ones((5, 5)), 
-            index=self.rpm_points, 
-            columns=self.load_points
-        )
-        
-        # Ignition Map (Degrees Advance)
-        base_ign = np.array([
-            [15, 12, 10, 8, 5],
-            [20, 18, 15, 12, 8],
-            [25, 22, 18, 15, 10],
-            [30, 26, 22, 18, 12],
-            [35, 30, 25, 20, 15]
-        ])
-        self.ignition_map = pd.DataFrame(
-            base_ign, 
-            index=self.rpm_points, 
-            columns=self.load_points
-        )
+        # Default to a generic Toyota profile
+        self.load_vehicle_defaults("Generic", "Gasoline")
 
-        # VVT Intake Map (Degrees Advance)
-        base_vvt_in = np.array([
-            [0, 5, 10, 15, 20],
-            [5, 15, 25, 35, 45],
-            [10, 20, 30, 40, 50],
-            [15, 25, 35, 45, 50],
-            [20, 30, 40, 50, 50]
-        ])
-        self.vvt_intake_map = pd.DataFrame(
-            base_vvt_in,
-            index=self.rpm_points,
-            columns=self.load_points
-        )
-
-        # VVT Exhaust Map (Degrees Retard)
-        base_vvt_ex = np.array([
-            [0, 2, 5, 8, 10],
-            [2, 5, 10, 15, 20],
-            [5, 10, 15, 20, 25],
-            [8, 15, 20, 25, 30],
-            [10, 20, 25, 30, 35]
-        ])
-        self.vvt_exhaust_map = pd.DataFrame(
-            base_vvt_ex,
-            index=self.rpm_points,
-            columns=self.load_points
-        )
+    def load_vehicle_defaults(self, model, engine_type):
+        """
+        Loads default maps for a specific vehicle model.
+        """
+        defaults = get_default_maps(model, engine_type)
+        self.fuel_map = defaults["fuel_map"]
+        self.ignition_map = defaults["ignition_map"]
+        self.vvt_intake_map = defaults["vvt_intake_map"]
+        self.vvt_exhaust_map = defaults["vvt_exhaust_map"]
         self.simulation_speed = 1.0
         self.pause_event.clear()
 
@@ -156,6 +132,15 @@ class OBDSimulator:
 
         self.data["FUEL_TRIM_ST"] = (1.0 - fuel_mult) * 20.0 
         self.data["SPEED"] = self.data["RPM"] * 0.02 
+        
+        # Update new PIDs
+        self.data["RUN_TIME"] = int(time.time() - self.start_time)
+        self.data["O2_B1S1"] = 0.45 + (0.4 * np.sin(time.time() * 2)) + (self.data["FUEL_TRIM_ST"] / 100)
+        self.data["O2_B1S1"] = max(0.1, min(0.9, self.data["O2_B1S1"]))
+        
+        self.data["CAT_TEMP_B1S1"] = 400 + (self.data["RPM"] / 10) + (self.data["ENGINE_LOAD"] * 2)
+        self.data["OIL_TEMP"] = 80 + (self.data["COOLANT_TEMP"] * 0.2) + (self.data["ENGINE_LOAD"] * 0.1)
+        self.data["EQUIV_RATIO"] = 1.0 / fuel_mult if fuel_mult > 0 else 1.0
 
     def _update_loop(self):
         while not self.stop_event.is_set():

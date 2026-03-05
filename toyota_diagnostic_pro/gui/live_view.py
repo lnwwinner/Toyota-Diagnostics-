@@ -87,12 +87,13 @@ def render_live_obd():
                 break
                 
             data = st.session_state.simulator.get_data()
-            issues = rules.evaluate(data)
             
-            # Update history
+            # Update history first so evaluate can use it
             new_row = pd.DataFrame([data])
             new_row['Time'] = pd.to_datetime('now')
             st.session_state.history = pd.concat([st.session_state.history, new_row]).tail(50)
+            
+            issues = rules.evaluate(data, history=st.session_state.history)
 
             with placeholder.container():
                 st.subheader("📊 Real-time Metrics")
