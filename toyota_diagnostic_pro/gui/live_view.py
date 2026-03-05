@@ -1,6 +1,7 @@
 import streamlit as st
 import time
 import pandas as pd
+import os
 from toyota_diagnostic_pro.simulator.obd_simulator import OBDSimulator
 from toyota_diagnostic_pro.simulator.fault_injector import FaultInjector
 from toyota_diagnostic_pro.analyzer.rule_engine import RuleEngine
@@ -31,13 +32,28 @@ def render_live_obd():
             st.session_state.obd_active = True
             st.session_state.simulator = OBDSimulator()
             st.session_state.simulator.start()
-            st.session_state.logger = DataLogger(selected_vehicle['vin'])
+            
+            # Initialize logger with OBD simulator
+            if 'logger' not in st.session_state:
+                st.session_state.logger = DataLogger(selected_vehicle['vin'], obd_simulator=st.session_state.simulator)
+            else:
+                st.session_state.logger.obd_simulator = st.session_state.simulator
+            
+            custom_path = st.session_state.get('custom_log_path')
+            st.session_state.logger.start_logging(filepath=custom_path if custom_path else None)
             st.session_state.injector = FaultInjector(st.session_state.simulator)
     with col2:
         if st.button("🛑 หยุดการเชื่อมต่อ"):
             if 'simulator' in st.session_state:
                 st.session_state.simulator.stop()
+            if 'logger' in st.session_state:
+                st.session_state.logger.stop_logging()
             st.session_state.obd_active = False
+
+    st.sidebar.subheader("📝 Logging Settings")
+    log_path = st.sidebar.text_input("Log File Path", value=st.session_state.get('custom_log_path', ""))
+    if log_path:
+        st.session_state.custom_log_path = log_path
 
     if st.session_state.get('obd_active', False):
         st.sidebar.subheader("🛠️ Fault Injection")
@@ -51,6 +67,10 @@ def render_live_obd():
             st.session_state.injector.inject_vvt_error()
         if st.sidebar.button("ฉีด: Injector Fault"):
             st.session_state.injector.inject_injector_fault()
+        if st.sidebar.button("ฉีด: Lean Condition (Complex)"):
+            st.session_state.injector.inject_complex_lean_condition()
+        if st.sidebar.button("ฉีด: Intermittent Misfire"):
+            st.session_state.injector.inject_intermittent_misfire()
         if st.sidebar.button("ล้าง Fault ทั้งหมด"):
             st.session_state.injector.clear_faults()
 
@@ -68,7 +88,6 @@ def render_live_obd():
                 
             data = st.session_state.simulator.get_data()
             issues = rules.evaluate(data)
-            st.session_state.logger.log(data)
             
             # Update history
             new_row = pd.DataFrame([data])
@@ -136,12 +155,22 @@ def render_live_obd():
                               labels={'value': 'Value', 'variable': 'Parameter'})
                 st.plotly_chart(fig2, use_container_width=True)
                     
-                if st.button("📄 สร้างรายงาน PDF"):
-                    pdf_path = report_gen.generate_pdf(selected_vehicle, data, issues)
-                    summary = ", ".join([i['Symptom'] for i in issues]) if issues else "ระบบทำงานปกติ"
-                    vehicle_mgr.add_session(selected_vehicle['id'], pdf_path, summary)
-                    st.success(f"สร้างรายงานสำเร็จและบันทึกประวัติแล้ว: {pdf_path}")
-                    with open(pdf_path, "rb") as f:
-                        st.download_button("ดาวน์โหลดรายงาน", f, file_name=f"report_{selected_vehicle['vin']}.pdf")
+                col_pdf, col_csv = st.columns(2)
+                with col_pdf:
+                    if st.button("📄 สร้างรายงาน PDF"):
+                        pdf_path = report_gen.generate_pdf(selected_vehicle, data, issues)
+                        summary = ", ".join([i['Symptom'] for i in issues]) if issues else "ระบบทำงานปกติ"
+                        vehicle_mgr.add_session(selected_vehicle['id'], pdf_path, summary)
+                        st.success(f"สร้างรายงานสำเร็จและบันทึกประวัติแล้ว: {pdf_path}")
+                        with open(pdf_path, "rb") as f:
+                            st.download_button("ดาวน์โหลด PDF", f, file_name=f"report_{selected_vehicle['vin']}.pdf")
+                            
+                with col_csv:
+                    # Ensure data is flushed to disk before downloading
+                    st.session_state.logger.save_to_csv()
+                    csv_path = st.session_state.logger.get_log_path()
+                    if csv_path and os.path.exists(csv_path):
+                        with open(csv_path, "rb") as f:
+                            st.download_button("💾 ดาวน์โหลด Log (CSV)", f, file_name=os.path.basename(csv_path))
             
             time.sleep(1)

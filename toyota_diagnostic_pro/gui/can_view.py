@@ -3,6 +3,7 @@ import time
 import pandas as pd
 import plotly.express as px
 from toyota_diagnostic_pro.core.can_reader import CANReader
+from toyota_diagnostic_pro.core.data_logger import DataLogger
 from toyota_diagnostic_pro.database.vehicle_manager import VehicleManager
 
 vehicle_mgr = VehicleManager()
@@ -26,9 +27,26 @@ def render_live_can():
             st.session_state.can_active = True
             st.session_state.can_reader = CANReader()
             st.session_state.can_reader.connect()
+            
+            # Initialize logger with CAN reader
+            if 'logger' not in st.session_state:
+                st.session_state.logger = DataLogger(selected_vehicle['vin'], can_reader=st.session_state.can_reader)
+            else:
+                st.session_state.logger.can_reader = st.session_state.can_reader
+            
+            custom_path = st.session_state.get('custom_log_path')
+            st.session_state.logger.start_logging(filepath=custom_path if custom_path else None)
+            
     with col2:
         if st.button("🛑 หยุดการเชื่อมต่อ CAN"):
+            if 'logger' in st.session_state:
+                st.session_state.logger.stop_logging()
             st.session_state.can_active = False
+
+    st.sidebar.subheader("📝 Logging Settings")
+    log_path = st.sidebar.text_input("Log File Path", value=st.session_state.get('custom_log_path', ""), key="can_log_path")
+    if log_path:
+        st.session_state.custom_log_path = log_path
 
     if st.session_state.get('can_active', False):
         # Data history for graphing
