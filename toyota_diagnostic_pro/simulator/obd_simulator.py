@@ -23,9 +23,12 @@ class OBDSimulator:
             "MISFIRE_CYL4": 0,
             "VVT_INTAKE_ANGLE_DIFF": 0.0,
             "VVT_EXHAUST_ANGLE_DIFF": 0.0,
+            "VVT_INTAKE_TARGET": 0.0,
+            "VVT_EXHAUST_TARGET": 0.0,
             "INJECTOR_PW": 2.5, # ms
             "IGNITION_TIMING": 10.0, # deg
             "O2_B1S1": 0.5, # V
+            "O2_B1S2": 0.5, # V
             "RUN_TIME": 0, # s
             "INTAKE_TEMP": 35, # C
             "FUEL_PRESSURE": 400, # kPa
@@ -34,13 +37,19 @@ class OBDSimulator:
             "AMBIENT_AIR_TEMP": 30, # C
             "OIL_TEMP": 95, # C
             "EQUIV_RATIO": 1.0, # Lambda
-            "CAT_TEMP_B1S1": 450 # C
+            "CAT_TEMP_B1S1": 450, # C
+            "TANK_PRESSURE": 0.5 # kPa
         }
         self.start_time = time.time()
         self.stop_event = Event()
         self.pause_event = Event()
         self.thread = None
         self.simulation_speed = 1.0 # Multiplier for delay (0.5s / speed)
+        
+        # VVT Configuration
+        self.vvt_response_speed = 0.5 # 0.1 to 1.0
+        self.vvt_intake_offset = 0.0
+        self.vvt_exhaust_offset = 0.0
         
         # Initialize ECU Maps (5x5 Grid)
         self.rpm_points = [1000, 2000, 3000, 4000, 5000]
@@ -137,6 +146,12 @@ class OBDSimulator:
         self.data["RUN_TIME"] = int(time.time() - self.start_time)
         self.data["O2_B1S1"] = 0.45 + (0.4 * np.sin(time.time() * 2)) + (self.data["FUEL_TRIM_ST"] / 100)
         self.data["O2_B1S1"] = max(0.1, min(0.9, self.data["O2_B1S1"]))
+        
+        # O2 Sensor 2 should be more stable if catalyst is working
+        self.data["O2_B1S2"] = 0.6 + (0.05 * np.sin(time.time() * 0.5))
+        self.data["O2_B1S2"] = max(0.1, min(0.9, self.data["O2_B1S2"]))
+        
+        self.data["TANK_PRESSURE"] = 0.5 + (0.1 * np.sin(time.time() * 0.1))
         
         self.data["CAT_TEMP_B1S1"] = 400 + (self.data["RPM"] / 10) + (self.data["ENGINE_LOAD"] * 2)
         self.data["OIL_TEMP"] = 80 + (self.data["COOLANT_TEMP"] * 0.2) + (self.data["ENGINE_LOAD"] * 0.1)

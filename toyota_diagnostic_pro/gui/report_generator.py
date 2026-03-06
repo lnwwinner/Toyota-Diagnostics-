@@ -40,11 +40,26 @@ class ReportGenerator:
         c.drawString(2*cm, y - 1.2*cm, f"Year: {vehicle_info['year']}")
         c.drawString(2*cm, y - 1.8*cm, f"Engine: {vehicle_info['engine_type']}")
         
+        # Sensor Snapshot
+        c.setFont("Helvetica-Bold", 14)
+        c.drawString(1.5*cm, y - 3*cm, "Sensor Snapshot")
+        c.setFont("Helvetica", 10)
+        y_snap = y - 3.8*cm
+        c.drawString(2*cm, y_snap, f"RPM: {diagnostic_results.get('RPM', 0)}")
+        c.drawString(2*cm, y_snap - 0.5*cm, f"Coolant Temp: {diagnostic_results.get('COOLANT_TEMP', 0)} C")
+        c.drawString(2*cm, y_snap - 1.0*cm, f"Engine Load: {diagnostic_results.get('ENGINE_LOAD', 0):.1f} %")
+        c.drawString(8*cm, y_snap, f"STFT: {diagnostic_results.get('FUEL_TRIM_ST', 0):.1f} %")
+        c.drawString(8*cm, y_snap - 0.5*cm, f"LTFT: {diagnostic_results.get('FUEL_TRIM_LT', 0):.1f} %")
+        c.drawString(8*cm, y_snap - 1.0*cm, f"MAF: {diagnostic_results.get('MAF', 0):.1f} g/s")
+        c.drawString(14*cm, y_snap, f"O2 B1S1: {diagnostic_results.get('O2_B1S1', 0):.2f} V")
+        c.drawString(14*cm, y_snap - 0.5*cm, f"O2 B1S2: {diagnostic_results.get('O2_B1S2', 0):.2f} V")
+        c.drawString(14*cm, y_snap - 1.0*cm, f"Tank Pressure: {diagnostic_results.get('TANK_PRESSURE', 0):.2f} kPa")
+
         # Diagnostic Summary
         c.setFont("Helvetica-Bold", 14)
-        c.drawString(1.5*cm, y - 3*cm, "Diagnostic Summary")
+        c.drawString(1.5*cm, y_snap - 2.5*cm, "Diagnostic Summary")
         
-        y_issue = y - 3.8*cm
+        y_issue = y_snap - 3.3*cm
         if not issues:
             c.setFont("Helvetica", 11)
             c.drawString(2*cm, y_issue, "No critical issues detected. System is healthy.")

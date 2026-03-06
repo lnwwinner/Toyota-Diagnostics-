@@ -89,6 +89,61 @@ class FaultInjector:
             self.intermittent_threads["INTERMITTENT_MISFIRE"] = (thread, stop_event)
             self.active_faults["INTERMITTENT_MISFIRE"] = True
 
+    def inject_evap_leak_small(self):
+        """
+        จำลองระบบ EVAP รั่วไหลขนาดเล็ก (P0442)
+        """
+        with self._lock:
+            self.simulator.data["TANK_PRESSURE"] = -0.5 # แรงดันตกเล็กน้อย
+            self.simulator.data["FUEL_TRIM_ST"] = 5.0
+            self.active_faults["EVAP_LEAK_SMALL"] = True
+
+    def inject_evap_leak_large(self):
+        """
+        จำลองระบบ EVAP รั่วไหลขนาดใหญ่ (P0455)
+        """
+        with self._lock:
+            self.simulator.data["TANK_PRESSURE"] = -2.0 # แรงดันตกมาก
+            self.simulator.data["FUEL_TRIM_ST"] = 12.0
+            self.active_faults["EVAP_LEAK_LARGE"] = True
+
+    def inject_catalyst_efficiency_low(self):
+        """
+        จำลองประสิทธิภาพแคทาลิติกต่ำ (P0420)
+        O2 Sensor 2 จะแกว่งตาม Sensor 1
+        """
+        stop_event = threading.Event()
+        
+        def cat_loop():
+            while not stop_event.is_set():
+                with self._lock:
+                    # ทำให้ O2 Sensor 2 แกว่งตาม Sensor 1 (สัญญาณว่าแคทพัง)
+                    self.simulator.data["O2_B1S2"] = self.simulator.data["O2_B1S1"] + random.uniform(-0.05, 0.05)
+                time.sleep(0.5)
+        
+        thread = threading.Thread(target=cat_loop, daemon=True)
+        thread.start()
+        
+        with self._lock:
+            self.intermittent_threads["CATALYST_EFFICIENCY"] = (thread, stop_event)
+            self.active_faults["CATALYST_EFFICIENCY"] = True
+
+    def inject_iat_sensor_high(self):
+        """
+        จำลองเซนเซอร์ IAT ค่าสูงผิดปกติ (P0113)
+        """
+        with self._lock:
+            self.simulator.data["INTAKE_TEMP"] = 150 # สูงเกินจริง
+            self.active_faults["IAT_SENSOR_HIGH"] = True
+
+    def inject_iat_sensor_low(self):
+        """
+        จำลองเซนเซอร์ IAT ค่าต่ำผิดปกติ (P0112)
+        """
+        with self._lock:
+            self.simulator.data["INTAKE_TEMP"] = -40 # ต่ำเกินจริง
+            self.active_faults["IAT_SENSOR_LOW"] = True
+
     def clear_faults(self):
         """
         ล้างค่าความผิดปกติทั้งหมด
@@ -109,5 +164,8 @@ class FaultInjector:
             self.simulator.data["VVT_EXHAUST_ANGLE_DIFF"] = 0.0
             self.simulator.data["MAF"] = 3.5
             self.simulator.data["INJECTOR_PW"] = 2.5
+            self.simulator.data["INTAKE_TEMP"] = 35
+            self.simulator.data["O2_B1S2"] = 0.6
+            self.simulator.data["TANK_PRESSURE"] = 0.5
             
             self.active_faults = {}

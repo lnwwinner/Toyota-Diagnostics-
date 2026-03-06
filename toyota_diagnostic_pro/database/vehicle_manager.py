@@ -36,14 +36,14 @@ class VehicleManager:
         conn.commit()
         conn.close()
 
-    def add_vehicle(self, user_id, vin, model, year, engine_type):
+    def add_vehicle(self, user_id, vin, make, model, year, engine_type):
         try:
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
             cursor.execute('''
-                INSERT INTO vehicles (user_id, vin, model, year, engine_type)
-                VALUES (?, ?, ?, ?, ?)
-            ''', (user_id, vin, model, year, engine_type))
+                INSERT INTO vehicles (user_id, vin, make, model, year, engine_type)
+                VALUES (?, ?, ?, ?, ?, ?)
+            ''', (user_id, vin, make, model, year, engine_type))
             conn.commit()
             conn.close()
             return True, "เพิ่มข้อมูลรถสำเร็จ"
@@ -63,16 +63,21 @@ class VehicleManager:
         conn.close()
         return results
 
-    def update_vehicle(self, vehicle_id, model, year, engine_type):
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        cursor.execute('''
-            UPDATE vehicles SET model = ?, year = ?, engine_type = ?
-            WHERE id = ?
-        ''', (model, year, engine_type, vehicle_id))
-        conn.commit()
-        conn.close()
-        return True
+    def update_vehicle(self, vehicle_id, vin, make, model, year, engine_type):
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            cursor.execute('''
+                UPDATE vehicles SET vin = ?, make = ?, model = ?, year = ?, engine_type = ?
+                WHERE id = ?
+            ''', (vin, make, model, year, engine_type, vehicle_id))
+            conn.commit()
+            conn.close()
+            return True, "อัปเดตข้อมูลสำเร็จ"
+        except sqlite3.IntegrityError:
+            return False, "เลขตัวถัง (VIN) นี้มีอยู่ในระบบแล้ว"
+        except Exception as e:
+            return False, str(e)
 
     def delete_vehicle(self, vehicle_id):
         conn = sqlite3.connect(self.db_path)

@@ -29,35 +29,35 @@ class RuleEngine:
                 {"RuleID": "R006", "Condition": "MISFIRE_CYL4 > 10", "DTC": "P0304", "Symptom_TH": "สูบ 4 จุดระเบิดผิดพลาด", "Recommendation_TH": "เช็คหัวเทียนสูบ 4, คอยล์จุดระเบิดสูบ 4"},
                 # Cooling System
                 {"RuleID": "R007", "Condition": "COOLANT_TEMP > 105", "DTC": "P0217", "Symptom_TH": "เครื่องยนต์ร้อนจัด (Overheat)", "Recommendation_TH": "ตรวจสอบระดับน้ำหล่อเย็น, พัดลมหม้อน้ำ, วาล์วน้ำ"},
-                {"RuleID": "R008", "Condition": "COOLANT_TEMP < 70 and RUN_TIME > 600", "DTC": "P0128", "Symptom_TH": "อุณหภูมิน้ำต่ำผิดปกติ (วาล์วน้ำเปิดค้าง)", "Recommendation_TH": "เปลี่ยนวาล์วน้ำ (Thermostat)"},
+                {"RuleID": "R008", "Condition": "COOLANT_TEMP < 70 AND RUN_TIME > 600", "DTC": "P0128", "Symptom_TH": "อุณหภูมิน้ำต่ำผิดปกติ (วาล์วน้ำเปิดค้าง)", "Recommendation_TH": "เปลี่ยนวาล์วน้ำ (Thermostat)"},
                 # Battery/Charging
-                {"RuleID": "R009", "Condition": "VOLTAGE < 12.0 and RPM > 1000", "DTC": "P0562", "Symptom_TH": "ไฟชาร์จต่ำ (Alternator ไม่ทำงาน)", "Recommendation_TH": "ตรวจสอบไดชาร์จ, สายพานหน้าเครื่อง, แบตเตอรี่"},
+                {"RuleID": "R009", "Condition": "VOLTAGE < 12.0 AND RPM > 1000", "DTC": "P0562", "Symptom_TH": "ไฟชาร์จต่ำ (Alternator ไม่ทำงาน)", "Recommendation_TH": "ตรวจสอบไดชาร์จ, สายพานหน้าเครื่อง, แบตเตอรี่"},
                 {"RuleID": "R010", "Condition": "VOLTAGE > 15.0", "DTC": "P0563", "Symptom_TH": "ไฟชาร์จสูงเกิน (Overcharge)", "Recommendation_TH": "ตรวจสอบ Regulator ของไดชาร์จ"},
                 # MAF/Air
-                {"RuleID": "R011", "Condition": "MAF < 2.0 and RPM > 600 and RPM < 800", "DTC": "P0101", "Symptom_TH": "ค่า MAF ต่ำผิดปกติที่รอบเดินเบา", "Recommendation_TH": "ทำความสะอาด MAF Sensor, เช็ครอยรั่วหลังลิ้นปีกผีเสื้อ"},
-                {"RuleID": "R012", "Condition": "MAF > 100 and RPM < 2000", "DTC": "P0101", "Symptom_TH": "ค่า MAF สูงผิดปกติ", "Recommendation_TH": "เช็คสายไฟ MAF, เช็คกราวด์"},
+                {"RuleID": "R011", "Condition": "MAF < 2.0 AND RPM > 600 AND RPM < 800", "DTC": "P0101", "Symptom_TH": "ค่า MAF ต่ำผิดปกติที่รอบเดินเบา", "Recommendation_TH": "ทำความสะอาด MAF Sensor, เช็ครอยรั่วหลังลิ้นปีกผีเสื้อ"},
+                {"RuleID": "R012", "Condition": "MAF > 100 AND RPM < 2000", "DTC": "P0101", "Symptom_TH": "ค่า MAF สูงผิดปกติ", "Recommendation_TH": "เช็คสายไฟ MAF, เช็คกราวด์"},
                 # Throttle
-                {"RuleID": "R013", "Condition": "THROTTLE_POS > 5 and RPM < 600", "DTC": "P0506", "Symptom_TH": "รอบเดินเบาต่ำกว่าเป้าหมาย", "Recommendation_TH": "ล้างลิ้นปีกผีเสื้อ, เช็คระบบ ISC"},
-                {"RuleID": "R014", "Condition": "THROTTLE_POS < 1 and RPM > 1000", "DTC": "P0507", "Symptom_TH": "รอบเดินเบาสูงกว่าเป้าหมาย", "Recommendation_TH": "เช็ครอยรั่วท่อไอดี, เช็ควาล์ว PCV"},
+                {"RuleID": "R013", "Condition": "THROTTLE_POS > 5 AND RPM < 600", "DTC": "P0506", "Symptom_TH": "รอบเดินเบาต่ำกว่าเป้าหมาย", "Recommendation_TH": "ล้างลิ้นปีกผีเสื้อ, เช็คระบบ ISC"},
+                {"RuleID": "R014", "Condition": "THROTTLE_POS < 1 AND RPM > 1000", "DTC": "P0507", "Symptom_TH": "รอบเดินเบาสูงกว่าเป้าหมาย", "Recommendation_TH": "เช็ครอยรั่วท่อไอดี, เช็ควาล์ว PCV"},
                 # O2 Sensor
-                {"RuleID": "R015", "Condition": "O2_B1S1 < 0.1 and FUEL_TRIM_ST > 10", "DTC": "P0130", "Symptom_TH": "O2 Sensor ค้างที่ค่าบาง (Lean Stuck)", "Recommendation_TH": "เปลี่ยน O2 Sensor ตัวหน้า"},
-                {"RuleID": "R016", "Condition": "O2_B1S1 > 0.9 and FUEL_TRIM_ST < -10", "DTC": "P0130", "Symptom_TH": "O2 Sensor ค้างที่ค่าหนา (Rich Stuck)", "Recommendation_TH": "เปลี่ยน O2 Sensor ตัวหน้า"},
+                {"RuleID": "R015", "Condition": "O2_B1S1 < 0.1 AND FUEL_TRIM_ST > 10", "DTC": "P0130", "Symptom_TH": "O2 Sensor ค้างที่ค่าบาง (Lean Stuck)", "Recommendation_TH": "เปลี่ยน O2 Sensor ตัวหน้า"},
+                {"RuleID": "R016", "Condition": "O2_B1S1 > 0.9 AND FUEL_TRIM_ST < -10", "DTC": "P0130", "Symptom_TH": "O2 Sensor ค้างที่ค่าหนา (Rich Stuck)", "Recommendation_TH": "เปลี่ยน O2 Sensor ตัวหน้า"},
                 # VVT (Variable Valve Timing) - Specific to Toyota
                 {"RuleID": "R017", "Condition": "VVT_INTAKE_ANGLE_DIFF > 5", "DTC": "P0011", "Symptom_TH": "องศา VVT ฝั่งไอดีผิดปกติ (Over-advanced)", "Recommendation_TH": "เช็ค OCV Valve, กรอง VVT, แรงดันน้ำมันเครื่อง"},
                 {"RuleID": "R018", "Condition": "VVT_EXHAUST_ANGLE_DIFF > 5", "DTC": "P0014", "Symptom_TH": "องศา VVT ฝั่งไอเสียผิดปกติ (Over-advanced)", "Recommendation_TH": "เช็ค OCV Valve ฝั่งไอเสีย"},
                 # Complex Correlations
-                {"RuleID": "R033", "Condition": "FUEL_TRIM_ST > 10 and MAF < 4.0 and RPM > 2000", "DTC": "P0101", "Symptom_TH": "MAF วัดค่าต่ำกว่าจริง (Under-reporting)", "Recommendation_TH": "ทำความสะอาด MAF Sensor, เช็คคราบน้ำมันในท่อไอดี"},
-                {"RuleID": "R034", "Condition": "FUEL_TRIM_ST > 15 and THROTTLE_POS < 15 and RPM < 1000", "DTC": "P0171", "Symptom_TH": "รอยรั่วอากาศหลังลิ้นปีกผีเสื้อ (Vacuum Leak)", "Recommendation_TH": "เช็คท่อแวคคั่ม, ปะเก็นท่อไอดี, วาล์ว PCV"},
-                {"RuleID": "R035", "Condition": "FUEL_TRIM_LT > 10 and ENGINE_LOAD > 70", "DTC": "P0171", "Symptom_TH": "น้ำมันจ่ายไม่พอที่โหลดสูง (Fuel Starvation)", "Recommendation_TH": "เช็คกรองน้ำมันเชื้อเพลิง, ปั๊มน้ำมันเชื้อเพลิง, หัวฉีดตัน"},
+                {"RuleID": "R033", "Condition": "FUEL_TRIM_ST > 10 AND MAF < 4.0 AND RPM > 2000", "DTC": "P0101", "Symptom_TH": "MAF วัดค่าต่ำกว่าจริง (Under-reporting)", "Recommendation_TH": "ทำความสะอาด MAF Sensor, เช็คคราบน้ำมันในท่อไอดี"},
+                {"RuleID": "R034", "Condition": "FUEL_TRIM_ST > 15 AND THROTTLE_POS < 15 AND RPM < 1000", "DTC": "P0171", "Symptom_TH": "รอยรั่วอากาศหลังลิ้นปีกผีเสื้อ (Vacuum Leak)", "Recommendation_TH": "เช็คท่อแวคคั่ม, ปะเก็นท่อไอดี, วาล์ว PCV"},
+                {"RuleID": "R035", "Condition": "FUEL_TRIM_LT > 10 AND ENGINE_LOAD > 70", "DTC": "P0171", "Symptom_TH": "น้ำมันจ่ายไม่พอที่โหลดสูง (Fuel Starvation)", "Recommendation_TH": "เช็คกรองน้ำมันเชื้อเพลิง, ปั๊มน้ำมันเชื้อเพลิง, หัวฉีดตัน"},
                 # Historical Analysis
                 {"RuleID": "R036", "Condition": "stuck('VOLTAGE', 20)", "DTC": "P0562", "Symptom_TH": "แรงดันไฟฟ้าค้าง (Sensor Frozen)", "Recommendation_TH": "เช็คขั้วแบตเตอรี่, เช็คสายไฟ Alternator"},
-                {"RuleID": "R037", "Condition": "avg('COOLANT_TEMP', 10) > 100 and delta('COOLANT_TEMP', 5) > 1", "DTC": "P0217", "Symptom_TH": "แนวโน้มความร้อนขึ้นสูงอย่างรวดเร็ว", "Recommendation_TH": "จอดรถทันที, เช็คพัดลมหม้อน้ำ, เช็คระดับน้ำ"},
-                {"RuleID": "R038", "Condition": "RPM > 3000 and SPEED == 0 and ENGINE_LOAD > 80", "DTC": "-", "Symptom_TH": "ตรวจพบอาการเกียร์รูดหรือคลัตช์ลื่น (Stall Test)", "Recommendation_TH": "ตรวจสอบระบบส่งกำลัง, เช็คระดับน้ำมันเกียร์"},
-                {"RuleID": "R039", "Condition": "avg('FUEL_TRIM_ST', 10) > 5 and avg('O2_B1S1', 10) < 0.2", "DTC": "P0171", "Symptom_TH": "ส่วนผสมบางอย่างต่อเนื่อง (Consistent Lean)", "Recommendation_TH": "เช็คแรงดันน้ำมันเชื้อเพลิง, เช็คหัวฉีด"},
-                {"RuleID": "R040", "Condition": "delta('COOLANT_TEMP', 20) < 1 and RUN_TIME > 600 and COOLANT_TEMP < 80", "DTC": "P0128", "Symptom_TH": "เครื่องยนต์ร้อนช้าผิดปกติ (Thermostat Stuck Open)", "Recommendation_TH": "เปลี่ยนวาล์วน้ำ"},
+                {"RuleID": "R037", "Condition": "avg('COOLANT_TEMP', 10) > 100 AND delta('COOLANT_TEMP', 5) > 1", "DTC": "P0217", "Symptom_TH": "แนวโน้มความร้อนขึ้นสูงอย่างรวดเร็ว", "Recommendation_TH": "จอดรถทันที, เช็คพัดลมหม้อน้ำ, เช็คระดับน้ำ"},
+                {"RuleID": "R038", "Condition": "RPM > 3000 AND SPEED == 0 AND ENGINE_LOAD > 80", "DTC": "-", "Symptom_TH": "ตรวจพบอาการเกียร์รูดหรือคลัตช์ลื่น (Stall Test)", "Recommendation_TH": "ตรวจสอบระบบส่งกำลัง, เช็คระดับน้ำมันเกียร์"},
+                {"RuleID": "R039", "Condition": "avg('FUEL_TRIM_ST', 10) > 5 AND avg('O2_B1S1', 10) < 0.2", "DTC": "P0171", "Symptom_TH": "ส่วนผสมบางอย่างต่อเนื่อง (Consistent Lean)", "Recommendation_TH": "เช็คแรงดันน้ำมันเชื้อเพลิง, เช็คหัวฉีด"},
+                {"RuleID": "R040", "Condition": "delta('COOLANT_TEMP', 20) < 1 AND RUN_TIME > 600 AND COOLANT_TEMP < 80", "DTC": "P0128", "Symptom_TH": "เครื่องยนต์ร้อนช้าผิดปกติ (Thermostat Stuck Open)", "Recommendation_TH": "เปลี่ยนวาล์วน้ำ"},
                 # Injector
-                {"RuleID": "R031", "Condition": "INJECTOR_PW > 10 and RPM < 1000", "DTC": "P0200", "Symptom_TH": "หัวฉีดฉีดน้ำมันนานผิดปกติที่รอบต่ำ", "Recommendation_TH": "เช็คหัวฉีดรั่ว, เช็คแรงดันน้ำมันเชื้อเพลิง"},
-                {"RuleID": "R032", "Condition": "INJECTOR_PW < 1 and RPM > 2000", "DTC": "P0200", "Symptom_TH": "หัวฉีดฉีดน้ำมันน้อยผิดปกติ", "Recommendation_TH": "เช็คปลั๊กหัวฉีด, เช็คกล่อง ECU"},
+                {"RuleID": "R031", "Condition": "INJECTOR_PW > 10 AND RPM < 1000", "DTC": "P0200", "Symptom_TH": "หัวฉีดฉีดน้ำมันนานผิดปกติที่รอบต่ำ", "Recommendation_TH": "เช็คหัวฉีดรั่ว, เช็คแรงดันน้ำมันเชื้อเพลิง"},
+                {"RuleID": "R032", "Condition": "INJECTOR_PW < 1 AND RPM > 2000", "DTC": "P0200", "Symptom_TH": "หัวฉีดฉีดน้ำมันน้อยผิดปกติ", "Recommendation_TH": "เช็คปลั๊กหัวฉีด, เช็คกล่อง ECU"},
                 # Catalyst
                 {"RuleID": "R019", "Condition": "CAT_TEMP_B1S1 > 900", "DTC": "P0420", "Symptom_TH": "แคตตาไลติกร้อนจัด", "Recommendation_TH": "ระวังไฟไหม้, เช็คหัวฉีดรั่ว, เช็คระบบจุดระเบิด"},
                 # Engine Load
@@ -76,6 +76,14 @@ class RuleEngine:
                 {"RuleID": "R028", "Condition": "THROTTLE_POS > 90 and ENGINE_LOAD < 20", "DTC": "-", "Symptom_TH": "เหยียบคันเร่งสุดแต่โหลดต่ำ", "Recommendation_TH": "เช็คคลัตช์ลื่น (เกียร์ธรรมดา) หรือ Torque Converter"},
                 {"RuleID": "R029", "Condition": "EQUIV_RATIO > 1.2", "DTC": "-", "Symptom_TH": "ส่วนผสมหนามาก (Lambda)", "Recommendation_TH": "เช็คหัวฉีด, O2 Sensor"},
                 {"RuleID": "R030", "Condition": "EQUIV_RATIO < 0.8", "DTC": "-", "Symptom_TH": "ส่วนผสมบางมาก (Lambda)", "Recommendation_TH": "เช็คปั๊มติ๊ก, กรองเบนซิน"},
+                # EVAP System
+                {"RuleID": "R041", "Condition": "TANK_PRESSURE < -0.2 AND TANK_PRESSURE > -1.0", "DTC": "P0442", "Symptom_TH": "ตรวจพบการรั่วไหลเล็กน้อยในระบบ EVAP", "Recommendation_TH": "เช็คฝาถังน้ำมัน, เช็คท่อทางเดินไอระเหยน้ำมัน"},
+                {"RuleID": "R042", "Condition": "TANK_PRESSURE <= -1.0", "DTC": "P0455", "Symptom_TH": "ตรวจพบการรั่วไหลขนาดใหญ่ในระบบ EVAP", "Recommendation_TH": "เช็คฝาถังน้ำมัน (อาจปิดไม่สนิท), เช็คสายน้ำมันหลุด/แตก"},
+                # Catalyst Efficiency
+                {"RuleID": "R043", "Condition": "delta('O2_B1S2', 10) > 0.1 AND delta('O2_B1S1', 10) > 0.1", "DTC": "P0420", "Symptom_TH": "ประสิทธิภาพแคตตาไลติกต่ำ (Catalyst Efficiency Low)", "Recommendation_TH": "เปลี่ยนแคตตาไลติก, เช็ครอยรั่วท่อไอเสีย"},
+                # IAT Sensor
+                {"RuleID": "R044", "Condition": "INTAKE_TEMP > 140", "DTC": "P0113", "Symptom_TH": "วงจรเซนเซอร์ IAT แรงดันสูงผิดปกติ (IAT High)", "Recommendation_TH": "เช็คปลั๊ก IAT, เช็คสายไฟขาดหรือช็อตไฟเลี้ยง"},
+                {"RuleID": "R045", "Condition": "INTAKE_TEMP < -30", "DTC": "P0112", "Symptom_TH": "วงจรเซนเซอร์ IAT แรงดันต่ำผิดปกติ (IAT Low)", "Recommendation_TH": "เช็ค IAT Sensor ช็อตลงกราวด์"},
             ]
             df = pd.DataFrame(data)
             df.to_excel(self.rules_path, index=False)

@@ -64,7 +64,7 @@ def render_ecu_tuner():
             versions = tuning_mgr.get_versions(vehicle_id)
             if versions:
                 for v in versions:
-                    col_v1, col_v2 = st.columns([3, 1])
+                    col_v1, col_v2, col_v3 = st.columns([2, 1, 1])
                     col_v1.write(f"**{v['version_name']}**\n{v['created_at']}")
                     if col_v2.button("📂", key=f"load_{v['id']}", help="Load this version"):
                         loaded_maps = tuning_mgr.load_version(v['id'])
@@ -76,7 +76,7 @@ def render_ecu_tuner():
                             st.success(f"โหลดเวอร์ชัน '{v['version_name']}' สำเร็จ!")
                             st.rerun()
                     
-                    if st.button("🗑️", key=f"del_{v['id']}", help="Delete this version"):
+                    if col_v3.button("🗑️", key=f"del_{v['id']}", help="Delete this version"):
                         tuning_mgr.delete_version(v['id'])
                         st.success("ลบเวอร์ชันแล้ว")
                         st.rerun()
@@ -85,41 +85,34 @@ def render_ecu_tuner():
         else:
             st.warning("กรุณาเพิ่มข้อมูลรถก่อนเริ่มการจูน")
 
-    # Simulation Controls
-    with st.sidebar:
-        st.markdown("---")
-        st.subheader("🕹️ Simulation Controls")
-        
-        # Speed Control
-        sim_speed = st.slider("Simulation Speed", 0.1, 5.0, simulator.simulation_speed, 0.1)
-        simulator.set_speed(sim_speed)
-        
-        # Play/Pause
-        is_paused = simulator.pause_event.is_set()
-        if st.button("⏸️ Pause" if not is_paused else "▶️ Resume"):
-            if is_paused:
-                simulator.resume()
-            else:
-                simulator.pause()
-            st.rerun()
-            
-        # Step Control (Only if paused)
-        if is_paused:
-            if st.button("⏭️ Step Frame"):
-                simulator.step()
-                st.rerun()
-                
-        # Reset to Defaults
-        if st.button("🔄 Reset to Defaults"):
-            simulator.reset_to_defaults()
-            st.success("รีเซ็ตค่าเริ่มต้นเรียบร้อยแล้ว")
-            st.rerun()
-
     # Get current maps from simulator
+
+    # Simulation Settings Expander
+    with st.expander("⚙️ Simulation & Update Settings", expanded=False):
+        col_s1, col_s2, col_s3 = st.columns([2, 1, 1])
+        with col_s1:
+            sim_speed = st.slider("ECU Map Update Speed (Simulation Speed)", 0.1, 10.0, simulator.simulation_speed, 0.1)
+            simulator.set_speed(sim_speed)
+        with col_s2:
+            is_paused = simulator.pause_event.is_set()
+            if st.button("⏸️ Pause" if not is_paused else "▶️ Resume", key="main_pause", use_container_width=True):
+                if is_paused: simulator.resume()
+                else: simulator.pause()
+                st.rerun()
+        with col_s3:
+            if st.button("🔄 Reset Maps", help="รีเซ็ตค่าเริ่มต้น", use_container_width=True):
+                simulator.reset_to_defaults()
+                st.rerun()
+
+    # Get current maps and live data from simulator
     current_fuel_map = simulator.fuel_map
     current_ign_map = simulator.ignition_map
     current_vvt_in_map = simulator.vvt_intake_map
     current_vvt_ex_map = simulator.vvt_exhaust_map
+    
+    live_data = simulator.get_data()
+    current_rpm = live_data.get('RPM', 0)
+    current_load = live_data.get('ENGINE_LOAD', 0)
 
     tab1, tab2, tab3, tab4 = st.tabs([
         "⛽ Fuel Map", 
@@ -163,6 +156,26 @@ def render_ecu_tuner():
                 ),
                 margin=dict(l=0, r=0, b=0, t=30)
             )
+            
+            # Add Current Point Marker
+            try:
+                rpm_idx = min(range(len(simulator.rpm_points)), key=lambda i: abs(simulator.rpm_points[i]-current_rpm))
+                target_rpm = simulator.rpm_points[rpm_idx]
+                load_idx = min(range(len(simulator.load_points)), key=lambda i: abs(simulator.load_points[i]-current_load))
+                target_load = simulator.load_points[load_idx]
+                current_val = edited_fuel_map.loc[target_rpm, target_load]
+                
+                fig.add_trace(go.Scatter3d(
+                    x=[current_load],
+                    y=[current_rpm],
+                    z=[current_val],
+                    mode='markers',
+                    marker=dict(size=10, color='red', symbol='cross'),
+                    name='Current Point'
+                ))
+            except Exception:
+                pass
+
             st.plotly_chart(fig, use_container_width=True)
 
     with tab2:
@@ -200,12 +213,39 @@ def render_ecu_tuner():
                 ),
                 margin=dict(l=0, r=0, b=0, t=30)
             )
+            
+            # Add Current Point Marker
+            try:
+                rpm_idx = min(range(len(simulator.rpm_points)), key=lambda i: abs(simulator.rpm_points[i]-current_rpm))
+                target_rpm = simulator.rpm_points[rpm_idx]
+                load_idx = min(range(len(simulator.load_points)), key=lambda i: abs(simulator.load_points[i]-current_load))
+                target_load = simulator.load_points[load_idx]
+                current_val = edited_ign_map.loc[target_rpm, target_load]
+                
+                fig_ign.add_trace(go.Scatter3d(
+                    x=[current_load],
+                    y=[current_rpm],
+                    z=[current_val],
+                    mode='markers',
+                    marker=dict(size=10, color='red', symbol='cross'),
+                    name='Current Point'
+                ))
+            except Exception:
+                pass
+
             st.plotly_chart(fig_ign, use_container_width=True)
 
     with tab3:
         st.subheader("VVT Intake Map Tuning")
         st.write("ปรับแต่งองศาแคมชาร์ฟฝั่งไอดี (Intake Cam Advance)")
         
+        # Live Feedback for VVT Intake
+        col_m1, col_m2, col_m3 = st.columns(3)
+        col_m1.metric("Current RPM", f"{current_rpm}")
+        col_m2.metric("Current Load", f"{current_load:.1f} %")
+        col_m3.metric("Live VVT Intake", f"{live_data.get('VVT_INTAKE_ANGLE_DIFF', 0):.1f} °", 
+                      help="องศาแคมชาร์ฟไอดีปัจจุบันที่จำลองจาก Map")
+
         col1, col2 = st.columns([1, 1])
         
         with col1:
@@ -231,12 +271,39 @@ def render_ecu_tuner():
                 scene=dict(xaxis_title='Load (%)', yaxis_title='RPM', zaxis_title='Advance (Deg)'),
                 margin=dict(l=0, r=0, b=0, t=30)
             )
+            
+            # Add Current Point Marker
+            try:
+                rpm_idx = min(range(len(simulator.rpm_points)), key=lambda i: abs(simulator.rpm_points[i]-current_rpm))
+                target_rpm = simulator.rpm_points[rpm_idx]
+                load_idx = min(range(len(simulator.load_points)), key=lambda i: abs(simulator.load_points[i]-current_load))
+                target_load = simulator.load_points[load_idx]
+                current_val = edited_vvt_in_map.loc[target_rpm, target_load]
+                
+                fig_vvt_in.add_trace(go.Scatter3d(
+                    x=[current_load],
+                    y=[current_rpm],
+                    z=[current_val],
+                    mode='markers',
+                    marker=dict(size=10, color='red', symbol='cross'),
+                    name='Current Point'
+                ))
+            except Exception:
+                pass
+
             st.plotly_chart(fig_vvt_in, use_container_width=True)
 
     with tab4:
         st.subheader("VVT Exhaust Map Tuning")
         st.write("ปรับแต่งองศาแคมชาร์ฟฝั่งไอเสีย (Exhaust Cam Retard)")
         
+        # Live Feedback for VVT Exhaust
+        col_me1, col_me2, col_me3 = st.columns(3)
+        col_me1.metric("Current RPM", f"{current_rpm}")
+        col_me2.metric("Current Load", f"{current_load:.1f} %")
+        col_me3.metric("Live VVT Exhaust", f"{live_data.get('VVT_EXHAUST_ANGLE_DIFF', 0):.1f} °",
+                       help="องศาแคมชาร์ฟไอเสียปัจจุบันที่จำลองจาก Map")
+
         col1, col2 = st.columns([1, 1])
         
         with col1:
@@ -262,6 +329,26 @@ def render_ecu_tuner():
                 scene=dict(xaxis_title='Load (%)', yaxis_title='RPM', zaxis_title='Retard (Deg)'),
                 margin=dict(l=0, r=0, b=0, t=30)
             )
+            
+            # Add Current Point Marker
+            try:
+                rpm_idx = min(range(len(simulator.rpm_points)), key=lambda i: abs(simulator.rpm_points[i]-current_rpm))
+                target_rpm = simulator.rpm_points[rpm_idx]
+                load_idx = min(range(len(simulator.load_points)), key=lambda i: abs(simulator.load_points[i]-current_load))
+                target_load = simulator.load_points[load_idx]
+                current_val = edited_vvt_ex_map.loc[target_rpm, target_load]
+                
+                fig_vvt_ex.add_trace(go.Scatter3d(
+                    x=[current_load],
+                    y=[current_rpm],
+                    z=[current_val],
+                    mode='markers',
+                    marker=dict(size=10, color='red', symbol='cross'),
+                    name='Current Point'
+                ))
+            except Exception:
+                pass
+
             st.plotly_chart(fig_vvt_ex, use_container_width=True)
 
     # Real-time Feedback Section
@@ -269,7 +356,7 @@ def render_ecu_tuner():
     st.subheader("📊 Real-time Feedback")
     
     # Live data display to see effect
-    data = simulator.get_data()
+    data = live_data
     
     c1, c2, c3, c4 = st.columns(4)
     c1.metric("RPM", f"{data.get('RPM', 0)}")

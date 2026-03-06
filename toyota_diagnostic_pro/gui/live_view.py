@@ -71,6 +71,20 @@ def render_live_obd():
             st.session_state.injector.inject_complex_lean_condition()
         if st.sidebar.button("ฉีด: Intermittent Misfire"):
             st.session_state.injector.inject_intermittent_misfire()
+        
+        st.sidebar.markdown("---")
+        st.sidebar.write("**Advanced Faults**")
+        if st.sidebar.button("ฉีด: EVAP Leak (Small)"):
+            st.session_state.injector.inject_evap_leak_small()
+        if st.sidebar.button("ฉีด: EVAP Leak (Large)"):
+            st.session_state.injector.inject_evap_leak_large()
+        if st.sidebar.button("ฉีด: Catalyst Efficiency Low"):
+            st.session_state.injector.inject_catalyst_efficiency_low()
+        if st.sidebar.button("ฉีด: IAT Sensor High"):
+            st.session_state.injector.inject_iat_sensor_high()
+        if st.sidebar.button("ฉีด: IAT Sensor Low"):
+            st.session_state.injector.inject_iat_sensor_low()
+            
         if st.sidebar.button("ล้าง Fault ทั้งหมด"):
             st.session_state.injector.clear_faults()
 
@@ -108,6 +122,14 @@ def render_live_obd():
                 c6.metric("LTFT", f"{data.get('FUEL_TRIM_LT', 0):.1f} %")
                 c7.metric("Voltage", f"{data.get('VOLTAGE', 0):.1f} V")
                 c8.metric("MAF", f"{data.get('MAF', 0):.1f} g/s")
+
+                st.markdown("---")
+                st.subheader("⛽ Fuel & Emissions")
+                e1, e2, e3, e4 = st.columns(4)
+                e1.metric("O2 B1S1", f"{data.get('O2_B1S1', 0):.2f} V")
+                e2.metric("O2 B1S2", f"{data.get('O2_B1S2', 0):.2f} V")
+                e3.metric("Tank Pressure", f"{data.get('TANK_PRESSURE', 0):.2f} kPa")
+                e4.metric("Fuel Pressure", f"{data.get('FUEL_PRESSURE', 0)} kPa")
 
                 st.markdown("---")
                 st.subheader("🔧 Advanced Toyota PIDs")
